@@ -17,13 +17,13 @@ public class QuickSort {
             return;
         }
 
-        int pivotIndex = getPivotIndex(items, leftIndex, rightIndex);
+        int pivotIndex = dividePartition(items, leftIndex, rightIndex);
 
         doQuickSort(items, leftIndex, pivotIndex - 1);
         doQuickSort(items, pivotIndex + 1, rightIndex);
     }
 
-    private int getPivotIndex(List<Integer> items, int leftIndex, int rightIndex) {
+    private int dividePartition(List<Integer> items, int leftIndex, int rightIndex) {
         int low = leftIndex;
         int high = rightIndex;
         int pivotIndex = low;
