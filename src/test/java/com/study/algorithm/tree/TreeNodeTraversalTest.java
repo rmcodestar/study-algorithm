@@ -183,30 +183,18 @@ public class TreeNodeTraversalTest {
 
         targetQueue.add(root);
 
-        while (true) {
-            Queue<TreeNode<String>> tempQueue = new LinkedList<>();
+        while (!targetQueue.isEmpty()) {
+            TreeNode<String> current = targetQueue.poll();  //visited
 
-            while (!targetQueue.isEmpty()) {
-                TreeNode<String> current = targetQueue.poll();  //visited
-
-                if (Objects.nonNull(current.getLeft())) {
-                    tempQueue.add(current.getLeft());
-                }
-
-                if (Objects.nonNull(current.getRight())) {
-                    tempQueue.add(current.getRight());
-                }
+            if (Objects.nonNull(current.getLeft())) {
+                targetQueue.add(current.getLeft());
             }
 
-            if (tempQueue.isEmpty()) {
-                break;
-            }
-
-            targetQueue.clear();
-            while (!tempQueue.isEmpty()) {
-                targetQueue.add(tempQueue.poll());
+            if (Objects.nonNull(current.getRight())) {
+                targetQueue.add(current.getRight());
             }
         }
+
     }
 
 }
