@@ -26,7 +26,7 @@ public class MatrixExponentiationProblem {
 
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                System.out.print(result[y][x]);
+                System.out.print(result[y][x] % DIVISOR);
                 System.out.print((x == size - 1) ? System.lineSeparator() : " ");
             }
         }
