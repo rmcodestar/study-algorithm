@@ -79,7 +79,6 @@ public class FenwickTreeProblem {
 
         long[] values = new long[size];
 
-        //save input data to partitionSum
         for (int index = 1; index < size; index++) {
             values[index] = scanner.nextInt();
         }
@@ -109,7 +108,6 @@ public class FenwickTreeProblem {
             }
         }
 
-        //print answer
         for (int index = 0; index < testcase; index++) {
             System.out.println(answers[index]);
         }
