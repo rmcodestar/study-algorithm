@@ -8,8 +8,8 @@
 - [ ] `SCC` : Kosaju's Algorithm, Tarjan's Algorithm 
 
 #### 구간트리
-- [ ] segment tree
-- [ ] fenwick tree 
+- [X] segment tree
+- [X] fenwick tree 
 
 #### 기하 알고리즘
 - [X] [CCW 알고리즘](https://rmcodestar.github.io/%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98/2018/07/29/vector-product/)  `#선분의 교차를 판별` `#벡터의 외적`
