@@ -32,21 +32,11 @@ public class LCA {
 
         Queue<Pair> remained = new LinkedList<>();
 
-
         for (int index = 1; index < nodeCount; index++) {
             int item = scanner.nextInt();
             int other = scanner.nextInt();
 
-            if (depth[item] != INITIAL) {
-                parent[other] = item;
-                depth[other] = depth[item] + 1;
-
-            } else if (depth[other] != INITIAL) {
-                parent[item] = other;
-                depth[item] = depth[other] + 1;
-            } else {
-                remained.offer(new Pair(item, other));
-            }
+            remained.offer(new Pair(item, other));
         }
 
         while (!remained.isEmpty()) {
@@ -72,31 +62,24 @@ public class LCA {
             int node = scanner.nextInt();
             int otherNode = scanner.nextInt();
 
+            while (node != otherNode) {
+                if (depth[node] == depth[otherNode]) {
+                    node = parent[node];
+                    otherNode = parent[otherNode];
 
-            int left = node;
-            int right = otherNode;
-
-            while (left != right) {
-                if (depth[left] == depth[right]) {
-                    left = parent[left];
-                    right = parent[right];
-
-                } else if (depth[left] > depth[right]) {
-                    left = parent[left];
+                } else if (depth[node] > depth[otherNode]) {
+                    node = parent[node];
 
                 } else {
-                    right = parent[right];
+                    otherNode = parent[otherNode];
                 }
             }
 
-            answers[index] = left;
-
+            answers[index] = node;
         }
-
 
         for (int index = 0; index < testcase; index++) {
             System.out.println(answers[index]);
         }
-
     }
 }
