@@ -56,7 +56,6 @@ public class LCA {
         }
 
         int testcase = scanner.nextInt();
-        int[] answers = new int[testcase];
 
         for (int index = 0; index < testcase; index++) {
             int node = scanner.nextInt();
@@ -75,11 +74,7 @@ public class LCA {
                 }
             }
 
-            answers[index] = node;
-        }
-
-        for (int index = 0; index < testcase; index++) {
-            System.out.println(answers[index]);
+            System.out.println(node);
         }
     }
 }
