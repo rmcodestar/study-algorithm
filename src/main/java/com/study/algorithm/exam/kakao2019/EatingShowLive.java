@@ -2,9 +2,6 @@ package com.study.algorithm.exam.kakao2019;
 
 import java.util.Objects;
 
-/**
- * todo testcase15 failed... why..
- */
 public class EatingShowLive {
 
     public int solution(int[] foodTimes, long afterSeconds) {
@@ -30,8 +27,7 @@ public class EatingShowLive {
             return (arr[0] == 0) ? null : 0;
         }
 
-        for (int index = (current + 1) % count; index < current + count; index++) {
-
+        for (int index = (current + 1) % count; index <= current + count; index++) {
             if (arr[index % count] != 0) {
                 return index % count;
             }
