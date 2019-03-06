@@ -73,11 +73,4 @@ public class PageRankTest {
         assertThat(pageRank.solution("Muzi", inputs), is(1));
     }
 
-    @Test
-    public void test3() {
-        String[] input = {"aba@aba aba<meta charset=\"utf-8\">\n  <meta property=\"og:url\" content=\"https://careers.kakao.com/interview/list\"/>"};
-
-        System.out.println(pageRank.solution("aba", input));
-    }
-
 }

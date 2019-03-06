@@ -1,90 +1,122 @@
 package com.study.algorithm.exam.kakao2019;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PageRank {
-    private static final Pattern URL_PATTERN = Pattern.compile("<meta property=\"og:url\" content=\"(\\w.*)\"/>");
-    private static final Pattern OUTER_LINK_PATTERN = Pattern.compile("<a href=\"(\\w.*)\">");
+    private static final Pattern URL_PATTERN = Pattern.compile("<meta property=\"og:url\" content=\"(.+?)\"/>");
+    private static final Pattern OUTER_LINK_PATTERN = Pattern.compile("<a href=\"(.+?)\">");
+    private static final String SPACE = " ";
 
     public class Page {
+        public Page(int index) {
+            this.index = index;
+            this.linkPoint = 0;
+            this.basePoint = 0;
+            this.links = new ArrayList<>();
+        }
+
         public int index;
         public String url;
-
-        public int base;
-        public List<String> links = new ArrayList<>();
-
+        public int basePoint;
+        public List<String> links;
         public double linkPoint;
 
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
         public double getMatchPoint() {
-            return this.linkPoint + base;
+            return this.linkPoint + this.basePoint;
+        }
+
+        public int getIndex() {
+            return this.index;
         }
 
         public void addLink(String link) {
             this.links.add(link);
         }
 
-        public Page(int index) {
-            this.index = index;
+        public String getUrl() {
+            return url;
+        }
+
+        public void increaseBasePoint() {
+            this.basePoint++;
+        }
+
+        public double getPoint() {
+            return (this.links.size() > 0) ? this.basePoint / (1.0 * this.links.size()) : 0;
+        }
+
+        public void addLinkPoint(double amount) {
+            this.linkPoint += amount;
         }
     }
 
 
     public int solution(String word, String[] inputs) {
-        Map<String, Page> pageMap = new HashMap<>();
+        List<Page> pages = makePages(word, inputs);
+
+        calculateLinkPoint(pages);
+
+        pages.sort(Comparator.comparing(Page::getMatchPoint).reversed()
+                .thenComparing(Page::getIndex));
+
+        return pages.get(0).getIndex();
+    }
+
+    private List<Page> makePages(String word, String[] htmls) {
         List<Page> pages = new ArrayList<>();
-        for (int index = 0; index < inputs.length; index++) {
-            String input = inputs[index].toLowerCase();
+
+        for (int index = 0; index < htmls.length; index++) {
+            String html = htmls[index].toLowerCase();
+
+            Matcher urlMatcher = URL_PATTERN.matcher(html);
 
             Page page = new Page(index);
-            Matcher matcher = URL_PATTERN.matcher(input);
 
-            if (matcher.find()) {
-                page.url = matcher.group(1);
+            if (urlMatcher.find()) {
+                page.setUrl(urlMatcher.group(1));
             }
 
-            matcher = OUTER_LINK_PATTERN.matcher(input);
-            while (matcher.find()) {
-                page.addLink(matcher.group(1));
+            Matcher linkMatcher = OUTER_LINK_PATTERN.matcher(html);
+
+            while (linkMatcher.find()) {
+                page.addLink(linkMatcher.group(1));
             }
 
-            String content = input.replaceAll("[^a-zA-Z]", " ");
-            String[] tokens = content.split(" ");
+            String content = html.replaceAll("[^a-zA-Z]", SPACE);
+            String[] tokens = content.split(SPACE);
 
             for (String token : tokens) {
-                String lowerWord = word.toLowerCase();
-                if (lowerWord.equals(token)) {
-                    page.base++;
+                if (token.equals(word.toLowerCase())) {
+                    page.increaseBasePoint();
                 }
             }
 
             pages.add(page);
-            pageMap.put(page.url, page);
         }
 
+        return pages;
+    }
+
+    private void calculateLinkPoint(List<Page> pages) {
+        Map<String, Page> pageMap = pages.stream()
+                .collect(Collectors.toMap(Page::getUrl, Function.identity()));
 
         for (Page page : pages) {
-            double point = (page.links.size() > 0) ? page.base / (1.0 * page.links.size()) : 0;
             for (String outerLink : page.links) {
-                Page otherPage = pageMap.get(outerLink);
+                Optional<Page> otherPage = Optional.ofNullable(pageMap.get(outerLink));
 
-                if (Objects.nonNull(otherPage)) {
-                    otherPage.linkPoint += point;
+                if (otherPage.isPresent()) {
+                    otherPage.get().addLinkPoint(page.getPoint());
                 }
             }
         }
-
-        pages.sort((p1, p2) -> {
-            int result = Double.compare(p2.getMatchPoint(), p1.getMatchPoint());
-
-            if (result != 0) {
-                return result;
-            }
-
-            return Integer.compare(p1.index, p2.index);
-        });
-
-        return pages.get(0).index;
     }
 }
