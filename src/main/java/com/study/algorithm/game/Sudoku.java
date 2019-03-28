@@ -1,256 +1,333 @@
 package com.study.algorithm.game;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Sudoku {
-    private static final int SIZE = 9;
-    private static final int EMPTY_VALUE = 0;
-    private static final String ANSI_CYAN = "\u001B[36m";
-    private static final String ANSI_RESET = "\u001B[0m";
-    private static final Set<Integer> FULL_SET = new HashSet<>(Arrays.asList(new Integer[]{1, 2, 3, 4, 5, 6, 7, 8, 9}));
+	private static final int SIZE = 9;
+	private static final int EMPTY_VALUE = 0;
+	private static final String ANSI_CYAN = "\u001B[36m";
+	private static final String ANSI_RESET = "\u001B[0m";
+	private static final List<Integer> FULL_SET = Arrays.asList(new Integer[] {1, 2, 3, 4, 5, 6, 7, 8, 9});
 
-    public class Point {
-        int x;
-        int y;
-        List<Integer> candidates = new ArrayList<>();
-        int value;
-        int areaNo;
+	public class Point {
+		int x;
+		int y;
+		List<Integer> candidates = new ArrayList<>();
+		int value;
+		int areaNo;
+		boolean guess;
 
-        public Point(int x, int y, int value) {
-            this.x = x;
-            this.y = y;
-            this.value = value;
-            this.areaNo = (x / 3) + (y / 3) * 3;
-        }
+		public Point(int x, int y, int value) {
+			this.x = x;
+			this.y = y;
+			this.value = value;
+			this.areaNo = (x / 3) + (y / 3) * 3;
+		}
 
-        public int getAreaNo() {
-            return areaNo;
-        }
+		public int getAreaNo() {
+			return areaNo;
+		}
 
-        public int getValue() {
-            return value;
-        }
+		public int getValue() {
+			return value;
+		}
 
-        public int getX() {
-            return x;
-        }
+		public int getX() {
+			return x;
+		}
 
-        public int getY() {
-            return y;
-        }
-    }
+		public int getY() {
+			return y;
+		}
+	}
 
-    public int[][] solve(int[][] input) {
-        int[][] output = Arrays.stream(input).map(r -> r.clone()).toArray(int[][]::new);
-        List<Point> points = makePoints(input);
+	public int[][] solve(int[][] input) {
+		int[][] output = Arrays.stream(input).map(r -> r.clone()).toArray(int[][]::new);
+		List<Point> points = makePoints(input);
 
-        print(input);
+		print(input);
 
-        int turn = 1;
-        List<Point> finding;
+		int turn = 1;
+		List<Point> finding;
 
-        do {
-            finding = new ArrayList<>();
+		do {
+			finding = new ArrayList<>();
 
-            List<Point> f1 = findInSection(points, output);
-            List<Point> f2 = findInRow(points, output);
-            List<Point> f3 = findUsingCountingInSection(points, output);
+			List<Point> f1 = findInSection(points, output);
+			List<Point> f2 = findInRow(points, output);
 
-            System.out.println("[turn] " + turn + ", finding : " + (f1.size() + f2.size() + f3.size()));
+			removeCandidate(points);
 
-            finding.addAll(f1);
-            finding.addAll(f2);
-            finding.addAll(f3);
+			List<Point> f3 = findUsingCountingInSection(points, output);
 
-            print(output);
+			finding.addAll(f1);
+			finding.addAll(f2);
+			finding.addAll(f3);
 
-        } while (turn++ < 100 && !finding.isEmpty());
+			System.out.println("[turn] " + turn + ", finding : " + finding.size());
+			print(output);
 
-        return output;
-    }
+			turn++;
 
-    private List<Point> makePoints(int[][] input) {
-        List<Point> points = new ArrayList<>();
+		} while (!finding.isEmpty());
 
-        for (int y = 0; y < SIZE; y++) {
-            for (int x = 0; x < SIZE; x++) {
-                points.add(new Point(x, y, input[y][x]));
-            }
-        }
+		if (completed(output)) {
+			System.out.println("성공");
 
-        return points;
-    }
+		} else {
+			System.out.println("실패");
+		}
 
-    private List<Point> findInSection(List<Point> points, int[][] output) {
-        List<Point> finding = new ArrayList<>();
+		return output;
+	}
 
-        Map<Integer, List<Point>> sectionPointMap = points.stream()
-                .collect(Collectors.groupingBy(Point::getAreaNo));
+	private boolean completed(int[][] output) {
+		for (int y = 0; y < SIZE; y++) {
+			for (int x = 0; x < SIZE; x++) {
+				if (output[y][x] == EMPTY_VALUE) {
+					return false;
+				}
+			}
+		}
 
-        for (int areaNo : sectionPointMap.keySet()) {
-            List<Integer> numbers = sectionPointMap.get(areaNo)
-                    .stream()
-                    .filter(point -> point.value != EMPTY_VALUE)
-                    .map(Point::getValue)
-                    .collect(Collectors.toList());
+		return true;
+	}
 
-            List<Integer> candidates = FULL_SET.stream()
-                    .filter(item -> !numbers.contains(item))
-                    .collect(Collectors.toList());
+	private List<Point> makePoints(int[][] input) {
+		List<Point> points = new ArrayList<>();
 
-            sectionPointMap.get(areaNo)
-                    .stream()
-                    .filter(point -> point.value == EMPTY_VALUE)
-                    .forEach(point -> point.candidates = new ArrayList<>(candidates));
+		for (int y = 0; y < SIZE; y++) {
+			for (int x = 0; x < SIZE; x++) {
+				points.add(new Point(x, y, input[y][x]));
+			}
+		}
 
+		return points;
+	}
 
-            if (candidates.size() == 1) {
-                Optional<Point> optionalPoint = sectionPointMap.get(areaNo)
-                        .stream()
-                        .filter(point -> point.value == EMPTY_VALUE)
-                        .findFirst();
+	private List<Point> findInSection(List<Point> points, int[][] output) {
+		List<Point> finding = new ArrayList<>();
 
-                if (optionalPoint.isPresent()) {
-                    Point point = optionalPoint.get();
-                    determineValue(point, candidates.get(0), points, output);
-                    finding.add(point);
+		Map<Integer, List<Point>> sectionPointMap = points.stream()
+			.collect(Collectors.groupingBy(Point::getAreaNo));
 
-                } else {
-                    throw new IllegalStateException("invalid case, not matched, areaNo : " + areaNo + ", candidate : " + candidates.get(0));
-                }
+		for (int areaNo : sectionPointMap.keySet()) {
+			List<Integer> numbers = sectionPointMap.get(areaNo)
+				.stream()
+				.filter(point -> point.value != EMPTY_VALUE)
+				.map(Point::getValue)
+				.collect(Collectors.toList());
 
-            }
-        }
+			List<Integer> candidates = FULL_SET.stream()
+				.filter(item -> !numbers.contains(item))
+				.collect(Collectors.toList());
 
-        return finding;
-    }
+			sectionPointMap.get(areaNo)
+				.stream()
+				.filter(point -> point.value == EMPTY_VALUE)
+				.filter(point -> point.candidates.isEmpty())
+				.forEach(point -> point.candidates = new ArrayList<>(candidates));
 
-    private List<Point> findInRow(List<Point> points, int[][] output) {
-        List<Point> finding = new ArrayList<>();
+			if (candidates.size() == 1) {
+				Optional<Point> optionalPoint = sectionPointMap.get(areaNo)
+					.stream()
+					.filter(point -> point.value == EMPTY_VALUE)
+					.findFirst();
 
-        for (Point point : points) {
-            List<Integer> candidates = point.candidates;
+				if (optionalPoint.isPresent()) {
+					Point point = optionalPoint.get();
+					determineValue(point, candidates.get(0), points, output);
+					finding.add(point);
 
-            if (point.value != EMPTY_VALUE) {
-                continue;
-            }
+				} else {
+					throw new IllegalStateException("invalid case, not matched, areaNo : " + areaNo + ", candidate : " + candidates.get(0));
+				}
 
+			}
+		}
 
-            for (int y = 0; y < SIZE; y++) {
-                int value = output[y][point.x];
-                if (value != EMPTY_VALUE && candidates.contains(value)) {
-                    candidates.remove(Integer.valueOf(value));
-                }
-            }
+		return finding;
+	}
 
-            for (int x = 0; x < SIZE; x++) {
-                int value = output[point.y][x];
-                if (value != EMPTY_VALUE && candidates.contains(value)) {
-                    candidates.remove(Integer.valueOf(value));
-                }
-            }
+	private List<Point> findInRow(List<Point> points, int[][] output) {
+		List<Point> finding = new ArrayList<>();
 
-            if (candidates.size() == 1) {
-                determineValue(point, candidates.get(0), points, output);
-                finding.add(point);
-            }
-        }
+		for (Point point : points) {
+			List<Integer> candidates = point.candidates;
 
-        return finding;
-    }
+			if (point.value != EMPTY_VALUE) {
+				continue;
+			}
 
-    private void determineValue(Point point, Integer candidate, List<Point> points, int[][] output) {
-        point.value = candidate;
-        output[point.y][point.x] = candidate;
+			for (int y = 0; y < SIZE; y++) {
+				int value = output[y][point.x];
+				if (value != EMPTY_VALUE && candidates.contains(value)) {
+					candidates.remove(Integer.valueOf(value));
+				}
+			}
 
-        if (point.candidates.contains(candidate)) {
-            point.candidates.remove(candidate);
-        }
+			for (int x = 0; x < SIZE; x++) {
+				int value = output[point.y][x];
+				if (value != EMPTY_VALUE && candidates.contains(value)) {
+					candidates.remove(Integer.valueOf(value));
+				}
+			}
 
-        points.stream()
-                .filter(otherPoint -> otherPoint.x == point.x || otherPoint.y == point.y || otherPoint.areaNo == point.areaNo)
-                .forEach(otherPoint -> {
-                    if (otherPoint.candidates.contains(candidate)) {
-                        otherPoint.candidates.remove(candidate);
-                    }
-                });
-    }
+			if (candidates.size() == 1) {
+				determineValue(point, candidates.get(0), points, output);
+				finding.add(point);
+			}
+		}
 
-    private List<Point> findUsingCountingInSection(List<Point> points, int[][] output) {
-        List<Point> finding = new ArrayList<>();
+		return finding;
+	}
 
-        Map<Integer, List<Point>> sectionPointMap = points.stream()
-                .collect(Collectors.groupingBy(Point::getAreaNo));
+	private void determineValue(Point point, Integer candidate, List<Point> points, int[][] output) {
+		point.value = candidate;
+		output[point.y][point.x] = candidate;
 
-        for (int areaNo : sectionPointMap.keySet()) {
-            Map<Integer, Long> countMap = sectionPointMap.get(areaNo)
-                    .stream()
-                    .filter(point -> point.value == EMPTY_VALUE)
-                    .map(point -> point.candidates)
-                    .flatMap(integers -> integers.stream())
-                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+		if (point.candidates.contains(candidate)) {
+			point.candidates.remove(candidate);
+		}
 
-            for (Integer candidate : countMap.keySet()) {
-                if (candidate == 0L) {
-                    continue;
-                }
+		points.stream()
+			.filter(otherPoint -> otherPoint.x == point.x || otherPoint.y == point.y || otherPoint.areaNo == point.areaNo)
+			.forEach(otherPoint -> {
+				if (otherPoint.candidates.contains(candidate)) {
+					otherPoint.candidates.remove(candidate);
+				}
+			});
+	}
 
-                if (countMap.get(candidate) == 1L) {
-                    Optional<Point> optionalPoint = sectionPointMap.get(areaNo)
-                            .stream()
-                            .filter(point -> point.value == EMPTY_VALUE)
-                            .filter(point -> point.candidates.contains(candidate))
-                            .findFirst();
+	private List<Point> findUsingCountingInSection(List<Point> points, int[][] output) {
+		List<Point> finding = new ArrayList<>();
 
-                    if (optionalPoint.isPresent()) {
-                        Point point = optionalPoint.get();
-                        determineValue(point, candidate, points, output);
-                        finding.add(point);
+		Map<Integer, List<Point>> sectionPointMap = points.stream()
+			.collect(Collectors.groupingBy(Point::getAreaNo));
 
-                    } else {
-                        throw new IllegalStateException("invalid case");
-                    }
-                }
-            }
+		for (int areaNo : sectionPointMap.keySet()) {
+			Map<Integer, Long> countMap = sectionPointMap.get(areaNo)
+				.stream()
+				.filter(point -> point.value == EMPTY_VALUE)
+				.map(point -> point.candidates)
+				.flatMap(integers -> integers.stream())
+				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-        }
+			for (Integer candidate : countMap.keySet()) {
+				if (candidate == 0L) {
+					continue;
+				}
 
-        return finding;
-    }
+				if (countMap.get(candidate) == 1L) {
+					Optional<Point> optionalPoint = sectionPointMap.get(areaNo)
+						.stream()
+						.filter(point -> point.value == EMPTY_VALUE)
+						.filter(point -> point.candidates.contains(candidate))
+						.findFirst();
 
+					if (optionalPoint.isPresent()) {
+						Point point = optionalPoint.get();
+						determineValue(point, candidate, points, output);
+						finding.add(point);
 
-    private void print(int[][] input) {
-        for (int y = 0; y < SIZE; y++) {
-            for (int x = 0; x < SIZE; x++) {
+					} else {
+						throw new IllegalStateException("invalid case");
+					}
+				}
+			}
 
-                StringBuilder builder = new StringBuilder();
+		}
 
-                if (input[y][x] != 0) {
-                    builder.append(ANSI_CYAN);
-                }
+		return finding;
+	}
 
-                builder.append(input[y][x] + " ");
+	private void print(int[][] input) {
+		for (int y = 0; y < SIZE; y++) {
+			for (int x = 0; x < SIZE; x++) {
 
-                if (input[y][x] != 0) {
-                    builder.append(ANSI_RESET);
-                }
+				StringBuilder builder = new StringBuilder();
 
-                System.out.print(builder.toString());
+				if (input[y][x] != 0) {
+					builder.append(ANSI_CYAN);
+				}
 
-                if (x % 3 == 2 && x != SIZE - 1) {
-                    System.out.print("| ");
-                }
+				builder.append(input[y][x] + " ");
 
-            }
+				if (input[y][x] != 0) {
+					builder.append(ANSI_RESET);
+				}
 
-            System.out.println();
+				System.out.print(builder.toString());
 
-            if (y % 3 == 2) {
-                System.out.println("----------------------");
-            }
+				if (x % 3 == 2 && x != SIZE - 1) {
+					System.out.print("| ");
+				}
 
-        }
-    }
+			}
+
+			System.out.println();
+
+			if (y % 3 == 2) {
+				System.out.println("----------------------");
+			}
+
+		}
+	}
+
+	private void removeCandidate(List<Point> points) {
+		Map<Integer, List<Point>> sectionPointMap = points.stream()
+			.collect(Collectors.groupingBy(Point::getAreaNo));
+
+		for (int areaNo = 0; areaNo < 9; areaNo++) {
+			for (int index = 0; index < 9; index++) {
+				final int thisAreaNo = areaNo;
+				final Integer thisIndex = Integer.valueOf(index);
+
+				Map<Integer, Set<Integer>> xMap = points.stream() // areaNo list by x
+					.filter(point -> point.areaNo % 3 == thisAreaNo % 3)
+					.filter(point -> point.value == EMPTY_VALUE)
+					.filter(point -> point.candidates.contains(thisIndex))
+					.collect(Collectors.groupingBy(Point::getX, Collectors.mapping(Point::getAreaNo, Collectors.toSet())));
+
+				for (Integer rowNo : xMap.keySet()) {
+					if (xMap.get(rowNo).size() == 1) {
+						Integer targetAreaNo = xMap.get(rowNo).stream()
+							.findFirst().get();
+
+						sectionPointMap.get(targetAreaNo)
+							.stream()
+							.filter(point -> point.value == EMPTY_VALUE && point.candidates.contains(thisIndex))
+							.filter(point -> point.x != rowNo)
+							.forEach(point -> point.candidates.remove(thisIndex));
+					}
+				}
+
+				Map<Integer, Set<Integer>> yMap = points.stream() // areaNo list by y
+					.filter(point -> point.areaNo / 3 == thisAreaNo / 3)
+					.filter(point -> point.value == EMPTY_VALUE)
+					.filter(point -> point.candidates.contains(thisIndex))
+					.collect(Collectors.groupingBy(Point::getY, Collectors.mapping(Point::getAreaNo, Collectors.toSet())));
+
+				for (Integer columnNo : yMap.keySet()) {
+					if (yMap.get(columnNo).size() == 1) {
+						Integer targetAreaNo = yMap.get(columnNo).stream()
+							.findFirst().get();
+
+						sectionPointMap.get(targetAreaNo)
+							.stream()
+							.filter(point -> point.value == EMPTY_VALUE && point.candidates.contains(thisIndex))
+							.filter(point -> point.y != columnNo)
+							.forEach(point -> point.candidates.remove(thisIndex));
+					}
+				}
+			}
+		}
+	}
 }
