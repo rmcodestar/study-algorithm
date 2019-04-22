@@ -1,17 +1,18 @@
 package com.study.algorithm.problem;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DragonCurve {
     private static final int MAX_SIZE = 101;
 
     public static void main(String... args) {
-        Scanner scanner = new Scanner(System.in);
         boolean[][] isDragonCurve = new boolean[MAX_SIZE][MAX_SIZE];
+        Scanner scanner = new Scanner(System.in);
 
         int n = scanner.nextInt();
+
         for (int index = 0; index < n; index++) {
             int x = scanner.nextInt();
             int y = scanner.nextInt();
@@ -25,20 +26,11 @@ public class DragonCurve {
             points.add(startPoint);
             points.add(endPoint);
 
-            findDragonCurve(points, generation);
-            markPoints(isDragonCurve, points);
+            List<Point> curves = findDragonCurve(points, generation);
+            markPoints(isDragonCurve, curves);
         }
 
-        int count = 0;
-        for (int y = 0; y < MAX_SIZE - 1; y++) {
-            for (int x = 0; x < MAX_SIZE - 1; x++) {
-                if (isDragonCurve[y][x] && isDragonCurve[y + 1][x] && isDragonCurve[y][x + 1] && isDragonCurve[y + 1][x + 1]) {
-                    count++;
-                }
-            }
-        }
-
-        System.out.println(count);
+        System.out.println(getSquarePointCount(isDragonCurve));
     }
 
     private static Point getNextPoint(Point point, Direction direction) {
@@ -56,33 +48,52 @@ public class DragonCurve {
         throw new IllegalArgumentException("invalid direction, direction : " + direction);
     }
 
+    private static List<Point> findDragonCurve(List<Point> points, int generation) {
+        List<Point> curves = new ArrayList<>();
 
-    private static void findDragonCurve(List<Point> points, int generation) {
+        for (Point point : points) {
+            curves.add(point);
+        }
+
         for (int tryCount = 0; tryCount < generation; tryCount++) {
+            List<Direction> rotatedDirections = new ArrayList<>();
 
-            List<Direction> willDirections = new ArrayList<>();
+            for (int backIndex = curves.size() - 1; backIndex > 0; backIndex--) {
+                Point before = curves.get(backIndex);
+                Point moreBefore = curves.get(backIndex - 1);
 
-            for (int backIndex = points.size() - 1; backIndex > 0; backIndex--) {
-                Point p1 = points.get(backIndex);
-                Point p2 = points.get(backIndex - 1);
+                Direction backward = Direction.find(before, moreBefore);
 
-                Direction direction = Direction.find(p1.x, p1.y, p2.x, p2.y);
-
-                willDirections.add(direction.getCwDirection());
+                rotatedDirections.add(backward.getCwDirection());
             }
 
-            Point endPoint = points.get(points.size() - 1);
+            Point endPoint = curves.get(curves.size() - 1);
 
-            for (int index = 0; index < willDirections.size(); index++) {
-                Point nextPoint = getNextPoint(endPoint, willDirections.get(index));
+            for (int index = 0; index < rotatedDirections.size(); index++) {
+                Point nextPoint = getNextPoint(endPoint, rotatedDirections.get(index));
 
-                points.add(nextPoint);
+                curves.add(nextPoint);
 
                 endPoint = nextPoint;
             }
         }
+
+        return curves;
     }
 
+    private static int getSquarePointCount(boolean[][] isDragonCurve) {
+        int count = 0;
+
+        for (int y = 0; y < MAX_SIZE - 1; y++) {
+            for (int x = 0; x < MAX_SIZE - 1; x++) {
+                if (isDragonCurve[y][x] && isDragonCurve[y + 1][x] && isDragonCurve[y][x + 1] && isDragonCurve[y + 1][x + 1]) {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
 
     private static void markPoints(boolean[][] map, List<Point> points) {
         for (Point point : points) {
@@ -97,7 +108,6 @@ public class DragonCurve {
         public Point(int x, int y) {
             this.x = x;
             this.y = y;
-
         }
 
         public int getX() {
@@ -132,26 +142,23 @@ public class DragonCurve {
             this.cwCode = cwCode;
         }
 
-        public static Direction find(int x1, int y1, int x2, int y2) {
-            if (x1 == x2) {
-                return (y1 > y2) ? BOTTOM : TOP;
+        private final static Map<Integer, Direction> CODE_MAP = Arrays.stream(values())
+                .collect(Collectors.toMap(Direction::getCode, Function.identity()));
+
+        public static Direction find(Point start, Point end) {
+            if (start.getX() == end.getX()) {
+                return (start.getY() > end.getY()) ? BOTTOM : TOP;
             }
 
-            if (y1 == y2) {
-                return (x1 > x2) ? LEFT : RIGHT;
+            if (start.getY() == end.getY()) {
+                return (start.getX() > end.getX()) ? LEFT : RIGHT;
             }
 
             return null;
         }
 
         public static Direction of(int code) {
-            for (Direction direction : values()) {
-                if (direction.getCode() == code) {
-                    return direction;
-                }
-            }
-
-            return null;
+            return CODE_MAP.get(code);
         }
 
         public int getCode() {
