@@ -19,7 +19,6 @@ public class FixLadder {
             int x = scanner.nextInt();
 
             ladders[y - 1][x - 1] = true;
-
         }
 
         if (isCompleted(ladders)) {
@@ -27,7 +26,6 @@ public class FixLadder {
             return;
         }
 
-        //nC1
         for (int max = 1; max <= 3; max++) {
             fix(ladders, max, 0, 0);
 
@@ -70,7 +68,6 @@ public class FixLadder {
     }
 
     public static boolean isCompleted(boolean[][] ladders) {
-        // setup
         int sizeX = ladders[0].length;
         int sizeY = ladders.length;
 
@@ -104,15 +101,5 @@ public class FixLadder {
         int temp = arr[a];
         arr[a] = arr[b];
         arr[b] = temp;
-    }
-
-    public static class Position {
-        int number;
-        int height;
-
-        public Position(int x, int y) {
-            this.number = x;
-            this.height = y;
-        }
     }
 }
