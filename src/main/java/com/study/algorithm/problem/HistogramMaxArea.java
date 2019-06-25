@@ -1,47 +1,46 @@
 package com.study.algorithm.problem;
 
-import java.util.Arrays;
-import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
+import java.util.StringTokenizer;
 
 public class HistogramMaxArea {
 
-    public static void main(String... args) {
-        Scanner scanner = new Scanner(System.in);
+    public static void main(String... args) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
-        while (scanner.hasNext()) {
-            String line = scanner.nextLine();
+        while (true) {
+            StringTokenizer stringTokenizer = new StringTokenizer(bufferedReader.readLine(), " ");
+            int n = Integer.parseInt(stringTokenizer.nextToken());
 
-            int[] inputs = Arrays.stream(line.split(" "))
-                    .mapToInt(i -> Integer.valueOf(i))
-                    .toArray();
-
-            if (inputs[0] == 0) {
+            if (n == 0) {
                 return;
             }
 
-            int n = inputs[0];
+            List<Integer> inputs = new ArrayList<>();
 
-            int[] heights = new int[n + 1];
-
-            for (int index = 1; index <= n; index++) {
-                heights[index - 1] = inputs[index];
+            for (int i = 0; i < n; i++) {
+                inputs.add(Integer.parseInt(stringTokenizer.nextToken()));
             }
 
-            double maxArea = 0;
+            inputs.add(0);
 
             Stack<Integer> stack = new Stack<>();
+            double maxArea = 0;
 
             for (int right = 0; right <= n; right++) {
-
-                while (!stack.isEmpty() && heights[stack.peek()] > heights[right]) {
-                    double y = heights[stack.peek()];
+                while (!stack.isEmpty() && inputs.get(stack.peek()) > inputs.get(right)) {
+                    int y = inputs.get(stack.peek());
 
                     stack.pop();
 
-                    double x = stack.isEmpty() ? right : right - stack.peek() - 1;
+                    int x = stack.isEmpty() ? right : right - stack.peek() - 1;
 
-                    maxArea = Math.max(maxArea, x * y * 1.0);
+                    maxArea = Math.max(maxArea, (double) x * y);
                 }
 
                 stack.push(right);
